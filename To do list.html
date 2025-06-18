@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Random Book Search</title>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; background: #f7f7f7; }
+    h1 { text-align: center; color: #333; }
+    .search-bar { display: flex; justify-content: center; margin-bottom: 20px; }
+    #query { width: 60%; padding: 10px; border: 1px solid #ccc; border-radius: 4px 0 0 4px; }
+    #searchBtn { padding: 10px 20px; background: #007BFF; color: white; border: none; border-radius: 0 4px 4px 0; cursor: pointer; }
+    #searchBtn:hover { background: #0056b3; }
+    #grid { max-width: 800px; margin: 0 auto; display: flex; justify-content: center; }
+    .card { background: white; border-radius: 6px; box-shadow: 0 1px 4px rgba(0,0,0,0.1); max-width: 400px; overflow: hidden; }
+    .card img { width: 100%; height: 300px; object-fit: cover; }
+    .card-body { padding: 15px; }
+    .title { font-size: 20px; margin: 0 0 10px; }
+    .author { color: #555; margin-bottom: 10px; }
+    .description { font-size: 14px; color: #666; max-height: 120px; overflow: hidden; }
+  </style>
+</head>
+<body>
+  <h1>📚 Random Book Search</h1>
+  <div class="search-bar">
+    <input id="query" type="text" placeholder="Enter book name..." />
+    <button id="searchBtn">Search</button>
+  </div>
+  <div id="grid"></div>
+
+  <script>
+    async function fetchBooks(query) {
+      const url = `https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(query)}&maxResults=20`;
+      const response = await fetch(url);
+      const data = await response.json();
+      return data.items || [];
+    }
+
+    function createCard(book) {
+      const info = book.volumeInfo;
+      const imgUrl = info.imageLinks?.thumbnail || 'https://via.placeholder.com/128x195?text=No+Image';
+      const title = info.title || 'No Title';
+      const authors = info.authors?.join(', ') || 'Unknown Author';
+      const desc = info.description || 'No description available.';
+      const card = document.createElement('div');
+      card.className = 'card';
+      card.innerHTML = `
+        <img src="${imgUrl}" alt="${title}" />
+        <div class="card-body">
+          <h2 class="title">${title}</h2>
+          <p class="author">By: ${authors}</p>
+          <p class="description">${desc}</p>
+        </div>
+      `;
+      return card;
+    }
+
+    document.getElementById('searchBtn').addEventListener('click', async () => {
+      const query = document.getElementById('query').value.trim();
+      const grid = document.getElementById('grid');
+      grid.innerHTML = 'Loading...';
+
+      if (!query) {
+        grid.innerHTML = 'Please enter a book name.';
+        return;
+      }
+
+      const books = await fetchBooks(query);
+      grid.innerHTML = '';
+
+      if (books.length === 0) {
+        grid.innerHTML = 'No books found.';
+        return;
+      }
+
+      // Pick one random book
+      const randomIndex = Math.floor(Math.random() * books.length);
+      const randomBook = books[randomIndex];
+      grid.appendChild(createCard(randomBook));
+    });
+
+    // Optional: Allow pressing Enter key to search
+    document.getElementById('query').addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        document.getElementById('searchBtn').click();
+      }
+    });
+  </script>
+</body>
+</html>
